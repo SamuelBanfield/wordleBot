@@ -2,8 +2,6 @@
 Words that arent words: lieth, dieth, grook, shmoo, chiff, goeth
 '''
 import wordle, math, pygame, sys, copy, random, os
-import matplotlib.pyplot as plt
-import numpy as np
 from pygame.locals import *
 
 currentLoc = os.path.dirname(__file__)
@@ -302,7 +300,9 @@ def getScoreDistribution(testList, wordList, noWords = 1842):
 	return wordsWithScore
 
 def findF(testWords, wordList, cDict):
-	uncertaintyByTurnsRemaining = {1:[], 2:[], 3:[], 4:[], 5:[], 6:[]}
+	import matplotlib.pyplot as plt
+	import numpy as np
+
 	noBins = 20
 	turnsRemainingHistogram = {}
 	for x in range(noBins+1):
@@ -393,6 +393,7 @@ def main():
 	#testList = copy.copy(wordList)
 	testWords = wordle.generateWordList(smallFile)
 	cDict = loadColouringDict(currentLoc+'/colourings/initialColourings2')
+	wordleBotWithUnknownAnswer2(testWords, wordList, cDict)
 
 
 if __name__ == '__main__':

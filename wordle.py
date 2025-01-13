@@ -131,7 +131,7 @@ def wordleGame(wordToGuess):
 def main():
 	words = generateWordList(file)
 	print('Press 1 to reset the game, and enter to guess a word')
-	wordleGame('gears')
+	wordleGame(random.choice(words))
 
 if __name__ == '__main__':
 	main()
