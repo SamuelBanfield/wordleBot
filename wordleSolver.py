@@ -1,15 +1,15 @@
 '''
 Words that arent words: lieth, dieth, grook, shmoo, chiff, goeth
 '''
-import wordle, math, pygame, sys, copy, random, os
+import wordle, math, pygame, sys, random, os
 from pygame.locals import *
 
-currentLoc = os.path.dirname(__file__)
-print(currentLoc)
 
-file = currentLoc+'/wordlists/bigWordFile.txt'
-smallFile = currentLoc+'/wordlists/5letterwords.txt'
-officialFile = currentLoc+'/wordlists/officialAnswerList.txt'
+currentLoc = os.path.dirname(__file__)
+
+file = currentLoc + '/wordlists/bigWordFile.txt'
+smallFile = currentLoc + '/wordlists/5letterwords.txt'
+officialFile = currentLoc + '/wordlists/officialAnswerList.txt'
 
 def f(x):
 	#these constants are determined by making alog(x)+b pass through (0,1), (us,mu), (5.4, 2.7)
@@ -27,7 +27,7 @@ def f(x):
 	mu = 3.35
 	us = 10.84
 	x0 = -4.5
-	return 1+ (mu-1)*math.log(1-(x/x0), 10)/math.log(1-(us/x0), 10)
+	return 1 + (mu - 1) * math.log(1 - (x / x0), 10) / math.log(1 - (us / x0), 10)
 
 def getFrequencies(answer, wordList):
 	#generates the distribution of possible colourings for words in a wordList if the solution is answer
@@ -41,12 +41,6 @@ def getFrequencies(answer, wordList):
 			patterns.append(pattern)
 			frequencies.append(1)
 	return frequencies
-
-	'''
-	#this bit pairs frequencies and patterns, then orders the patterns by their frequencies
-	patternsWithFrequencies = [[patterns[x], frequencies[x]] for x in range(len(patterns))]
-	patternsWithFrequencies.sort(reverse = True, key = lambda pair: pair[1])
-	'''
 
 def getFrequencyDict(answer, wordList):
 	frequencies = {}
@@ -70,12 +64,12 @@ def getAllEntropies(answerList, wordList):
 	for word in wordList:
 		frequencies = getFrequencies(word, answerList)
 		wordWithEntropy.append([word, getEntropy(frequencies, len(answerList))])
-	#wordWithEntropy.sort(reverse = True, key = lambda pair: pair[1])
+
 	return wordWithEntropy
 
 def playWordleBotV1(wordList, word):
 	wordWithMaxEntropy = 'tares' #always using this word as it maximises expected entropy with no information
-	Game = wordle.gameObject(word)
+	Game = wordle.GameObject(word)
 	nextGuess = wordWithMaxEntropy
 	score = 0
 	while score < 6:
@@ -109,7 +103,7 @@ def thinList(l, colouring, guess):
 def playWordleBotV2(answerList, wordList, word, cDict):
 	#answer list is the list of possible solutions, testList is the list of allowed guesses
 	wordWithMaxEntropy = 'tares' #always using this word as it maximises expected entropy with no information
-	Game = wordle.gameObject(word)
+	Game = wordle.GameObject(word)
 	nextGuess = wordWithMaxEntropy
 	score = 0
 	while score < 6:
@@ -150,7 +144,7 @@ def playWordleBotV2(answerList, wordList, word, cDict):
 def playWordleBotV3(answerList, wordList, word, cDict):
 	#answer list is the list of possible solutions, testList is the list of allowed guesses
 	wordWithMaxEntropy = 'tares' #always using this word as it maximises expected entropy with no information
-	Game = wordle.gameObject(word)
+	Game = wordle.GameObject(word)
 	nextGuess = wordWithMaxEntropy
 	score = 0
 	while score < 6:
@@ -187,7 +181,7 @@ def playWordleBotV3(answerList, wordList, word, cDict):
 def wordleBotWithUnknownAnswer1(wordList):
 	wordList
 	wordWithMaxEntropy = 'tares'
-	game = wordle.gameObject('', 1)
+	game = wordle.GameObject('', 1)
 	game.guess('tares')
 	font = pygame.font.Font(pygame.font.get_default_font(), 100)
 	width = 500
@@ -232,14 +226,13 @@ def wordleBotWithUnknownAnswer1(wordList):
 
 def wordleBotWithUnknownAnswer2(wordList, testList, cDict):
 	wordWithMaxEntropy = 'tares'
-	game = wordle.gameObject('', 1)
+	game = wordle.GameObject('', 1)
 	game.guess(wordWithMaxEntropy)
 	font = pygame.font.Font(pygame.font.get_default_font(), 100)
 	width = 500
 	height = 600
 	SCREEN = pygame.display.set_mode((width, height))
 	SCREEN.fill((255,255,255))
-	running = True
 	clock = pygame.time.Clock()
 	FPS = 20
 	playing = True
@@ -285,19 +278,6 @@ def wordleBotWithUnknownAnswer2(wordList, testList, cDict):
 					game.colourings[mouseTile[1]][mouseTile[0]] = game.colourings[mouseTile[1]][mouseTile[0]] % 3
 		wordle.drawScreen(SCREEN, game, font)
 		clock.tick(FPS)
-
-def getScoreDistribution(testList, wordList, noWords = 1842):
-	wordsWithScore = []
-	if noWords == 1842:
-		for word in range(len(testList)):
-			if word % 50 == 0:
-				print(word/1842*100)
-			wordsWithScore.append([testList[word], playWordleBot(wordList, testList[word])])
-	else:
-		for _ in range(noWords):
-			word = random.choice(testList)
-			wordsWithScore.append([word, playWordleBot(wordList, word)])
-	return wordsWithScore
 
 def findF(testWords, wordList, cDict):
 	import matplotlib.pyplot as plt
@@ -365,7 +345,6 @@ def createInitialColouringsFile(wordList, testWords, sol):
 
 def loadColouringDict(file):
 	initialColouringsDict = {}
-	lines = []
 	with open(file, 'r') as f:
 		l = f.readline()
 		for v in range(3):
@@ -373,7 +352,6 @@ def loadColouringDict(file):
 				for x in range(3):
 					for y in range(3):
 						for z in range(3):
-
 							initialColouringsDict[(v,w,x,y,z)] = f.readline()[:-1]
 							f.readline()
 	return initialColouringsDict

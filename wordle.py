@@ -11,7 +11,7 @@ colourDict = {
 
 file = "wordlists/5letterwords.txt" #choose text file to generate word from
 
-class gameObject:
+class GameObject:
 	def __init__(self, answer, mode = 0):
 		self.mode = mode
 		self.answer = answer
@@ -102,7 +102,7 @@ def handleTyping(key, typedWord, game):
 	return typedWord
 
 def wordleGame(wordToGuess):
-	Game = gameObject(wordToGuess)
+	Game = GameObject(wordToGuess)
 	font = pygame.font.Font(pygame.font.get_default_font(), 100)
 	width = 500
 	height = 600
@@ -124,7 +124,7 @@ def wordleGame(wordToGuess):
 				elif event.key == K_1:
 
 					wordToGuess = random.choice(generateWordList("wordlists/5letterwords.txt"))
-					Game = gameObject(wordToGuess)
+					Game = GameObject(wordToGuess)
 		drawScreen(SCREEN, Game, font, typedWord)
 		clock.tick(FPS)
 
