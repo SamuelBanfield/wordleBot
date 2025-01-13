@@ -1,12 +1,5 @@
-WORDLE BOT by Sam Banfield
----requires pygame---
+This project features a Pygame UI for playing wordle, and a solver to provide the best word.
 
-------------------------------------------------------------------------------------
+To run the Wordle game, run `python wordle.py`. Type your guess and press enter to submit, the rules are the same as standard Wordle. Pressing `1` will reset the game.
 
-This is the code for a wordle game and interface, and a wordle solver. The code is veeery messy so needs lots of cleaning up.
-
-------------------------------------------------------------------------------------
-
-wordle.py contains the main wordle game and interface. wordleSolver.py contains lots of versions of the bot, this is where all of the mess is. There are seperate functions for the bot with unknown and known answers. The known answer is used for testing, unknown answer requires input from the user. There also functions for creating initial colourings lists for various word.
-
-this readme is very incomplete, need to write it but im going to bed 
+This project also features a Wordle solver, which can be run using `python wordleSolver.py`. The solver will provide a word, and each letter should be clicked until it has the right colour. Then, pressing space will get the solver to provide its next clue.
