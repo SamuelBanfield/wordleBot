@@ -10,7 +10,7 @@ def generate_word_list(file):
 
 def compare_words(guess, answer):
 	#0 is grey, 1 is yellow, 2 is green
-	colouring = [0,0,0,0,0]
+	colouring = [0, 0, 0, 0, 0]
 	if len(guess) != 5:
 		print('Guess: ', guess, 'Answer: ', answer)
 	for x in range(5):
@@ -32,8 +32,9 @@ class GameObject:
 		self.mode = mode
 		self.answer = answer
 		self.guesses = ['' for _ in range(6)] #matrix for showing the current guesses, updates livetime with key presses
-		self.colourings = [[-1,-1,-1,-1,-1] for x in range(6)] #colourings update row by row as guesses are made
+		self.colourings = [[-1, -1, -1, -1, -1] for x in range(6)] #colourings update row by row as guesses are made
 		self.current_guess = 0
+
 	def guess(self, guess):
 		self.guesses[self.current_guess] = guess
 		if self.mode == 0:
