@@ -43,8 +43,11 @@ class PygameWordleUI:
 			if event.type == QUIT:
 				pygame.quit()
 				sys.exit()
-			if event.type == KEYUP:
-				self.handle_key_up(event.key)
+			self.handle_event(event)
+
+	def handle_event(self, event):
+		if event.type == KEYUP:
+			self.handle_key_up(event.key)
 
 	def handle_key_up(self, key):
 		if K_a <= key <= K_z: # Letter keys

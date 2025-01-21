@@ -1,22 +1,20 @@
 '''
 Words that arent words: lieth, dieth, grook, shmoo, chiff, goeth
 '''
-import wordle, math, pygame, sys, os
+import math
 from pygame.locals import *
 
-from bot.game import GameObject, compare_words
+from bot.game import GameObject, compare_words, generate_word_list
 from itertools import product
 
 
-current_loc = os.path.dirname(__file__)
-
-file = current_loc + '/wordlists/bigWordFile.txt'
-small_file = current_loc + '/wordlists/5letterwords.txt'
-official_file = current_loc + '/wordlists/officialAnswerList.txt'
+file = 'wordlists/bigWordFile.txt'
+small_file = 'wordlists/5letterwords.txt'
+official_file = 'wordlists/officialAnswerList.txt'
 
 def f(x):
 	# These constants are determined by making alog(x)+b pass through (0,1), (us,mu), (5.4, 2.7)
-	mu = 3.35
+	# mu = 3.35
 	us = 10.84
 	x0 = -4.5
 	return 1 + (mu - 1) * math.log(1 - (x / x0), 10) / math.log(1 - (us / x0), 10)
@@ -26,7 +24,7 @@ def get_frequencies(answer, word_list):
 	patterns = []
 	frequencies = []
 	for word in word_list:
-		pattern = wordle.compare(answer, word)
+		pattern = compare_words(answer, word)
 		if pattern in patterns:
 			frequencies[patterns.index(pattern)] += 1
 		else:
@@ -50,6 +48,17 @@ def get_all_entropies(answer_list, word_list):
 	return word_with_entropy
 
 def play_wordle_bot(answer_list, word_list, word, c_dict):
+	"""
+	Simulates a bot playing the Wordle game and returns the number of guesses taken to find the correct answer.
+	Parameters:
+	answer_list (list of str): The list of possible solutions.
+	word_list (list of str): The list of allowed guesses.
+	word (str): The target word to be guessed by the bot.
+	c_dict (dict): A dictionary mapping colourings to the next guess word.
+	Returns:
+	int: The number of guesses taken to find the correct answer. Returns 100 if the bot fails to find the answer within 6 guesses.
+	Notes: The bot starts with the word 'tares' as it maximizes expected entropy with no information.
+	"""
 	# Answer list is the list of possible solutions, test_list is the list of allowed guesses
 	word_with_max_entropy = 'tares' # Always using this word as it maximises expected entropy with no information
 	game = GameObject(word)
@@ -69,8 +78,7 @@ def play_wordle_bot(answer_list, word_list, word, c_dict):
 
 		# Should never run, catches incorrect word errors
 		if len(answer_list) == 0:
-			print('Word not in word list!')
-			return
+			raise ValueError('Word not in word list!')
 
 		# Refreshes the entropies and selects the most entropic word as next guess
 		if len(answer_list) < 3:
@@ -83,61 +91,6 @@ def play_wordle_bot(answer_list, word_list, word, c_dict):
 			next_guess = e[-1][0]
 
 	return 100 # Returns 100 in the case of a loss
-
-def wordle_bot_with_unknown_answer(word_list, test_list, c_dict):
-	word_with_max_entropy = 'tares'
-	game = GameObject('', 1)
-	game.guess(word_with_max_entropy)
-	font = pygame.font.Font(pygame.font.get_default_font(), 100)
-	width = 500
-	height = 600
-	screen = pygame.display.set_mode((width, height))
-	screen.fill((255,255,255))
-	clock = pygame.time.Clock()
-	fps = 20
-	playing = True
-	while playing:
-		for event in pygame.event.get():
-			if event.type == QUIT:
-				pygame.quit()
-				sys.exit()
-			if event.type == KEYUP:
-				if event.key == K_SPACE:
-					print(game.colourings, game.guesses)
-					if len(game.colourings[game.currentGuess-1]) == 5:
-						colouring_complete = True
-						for colouring in game.colourings[game.currentGuess-1]:
-							if colouring == -1:
-								colouring_complete = False
-						if colouring_complete:
-							test_list = [word for word in test_list if game.colourings[game.currentGuess-1] == compare_words(game.guesses[game.currentGuess-1], word)]
-							if game.currentGuess == 1:
-								next_guess = c_dict[tuple(game.colourings[game.currentGuess-1])]
-							else:
-								scores = get_all_entropies(test_list, word_list)
-								n = len(test_list)
-								if n == 0:
-									'No possibilities'
-								p = 1/n
-								score = game.currentGuess-1
-								for pair in scores:
-									if pair[0] in test_list:
-										pair[1] = (score+1)*(p) + (1-p)*(score+1+f(math.log(n, 2)-pair[1]))
-									else:
-										pair[1] = score+1+f(math.log(n, 2)-pair[1])
-								scores.sort(reverse = True, key = lambda pair: pair[1])
-								next_guess = scores[-1][0]
-
-							print(len(test_list))
-							game.guess(next_guess)
-			if event.type == MOUSEBUTTONUP:
-				mouse = pygame.mouse.get_pos()
-				mouse_tile = [mouse[0]//100, mouse[1]//100]
-				if mouse_tile[1] == game.currentGuess-1:
-					game.colourings[mouse_tile[1]][mouse_tile[0]] += 1
-					game.colourings[mouse_tile[1]][mouse_tile[0]] = game.colourings[mouse_tile[1]][mouse_tile[0]] % 3
-		wordle.drawScreen(screen, game, font)
-		clock.tick(fps)
 
 def create_initial_colourings_file(word_list, test_words, sol):
 	initial_colourings_dict = {}
@@ -167,13 +120,8 @@ def load_colouring_dict(file):
 	return initial_colourings_dict
 
 def main():
-	word_list = wordle.generateWordList(file)
-	#test_list = copy.copy(word_list)
-	test_words = wordle.generateWordList(small_file)
-	c_dict = load_colouring_dict(current_loc+'/colourings/initialColourings2')
-	# play_wordle_bot(test_words, word_list, 'tares', c_dict)
-	wordle_bot_with_unknown_answer(test_words, word_list, c_dict)
-
-
-if __name__ == '__main__':
-	main()
+	word_list = generate_word_list(file)
+	test_words = generate_word_list(small_file)
+	c_dict = load_colouring_dict('colourings/initialColourings2')
+	for word in word_list:
+		print((word, play_wordle_bot(test_words, word_list, word, c_dict)))
