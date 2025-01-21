@@ -28,15 +28,14 @@ def compare_words(guess, answer):
 
 
 class GameObject:
-	def __init__(self, answer, mode = 0):
-		self.mode = mode
+	def __init__(self, answer):
 		self.answer = answer
 		self.guesses = ['' for _ in range(6)] #matrix for showing the current guesses, updates livetime with key presses
-		self.colourings = [[-1, -1, -1, -1, -1] for x in range(6)] #colourings update row by row as guesses are made
+		self.colourings = [[-1, -1, -1, -1, -1] for _ in range(6)] #colourings update row by row as guesses are made
 		self.current_guess = 0
 
 	def guess(self, guess):
 		self.guesses[self.current_guess] = guess
-		if self.mode == 0:
+		if self.answer:
 			self.colourings[self.current_guess] = compare_words(guess, self.answer)
 		self.current_guess += 1

@@ -14,7 +14,7 @@ official_file = 'wordlists/officialAnswerList.txt'
 
 def f(x):
 	# These constants are determined by making alog(x)+b pass through (0,1), (us,mu), (5.4, 2.7)
-	# mu = 3.35
+	mu = 3.35
 	us = 10.84
 	x0 = -4.5
 	return 1 + (mu - 1) * math.log(1 - (x / x0), 10) / math.log(1 - (us / x0), 10)
