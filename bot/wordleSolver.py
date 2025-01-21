@@ -5,11 +5,11 @@ import wordle, math, pygame, sys, random, os
 from pygame.locals import *
 
 
-currentLoc = os.path.dirname(__file__)
+current_loc = os.path.dirname(__file__)
 
-file = currentLoc + '/wordlists/bigWordFile.txt'
-smallFile = currentLoc + '/wordlists/5letterwords.txt'
-officialFile = currentLoc + '/wordlists/officialAnswerList.txt'
+file = current_loc + '/wordlists/bigWordFile.txt'
+small_file = current_loc + '/wordlists/5letterwords.txt'
+official_file = current_loc + '/wordlists/officialAnswerList.txt'
 
 def f(x):
 	#these constants are determined by making alog(x)+b pass through (0,1), (us,mu), (5.4, 2.7)
@@ -29,11 +29,11 @@ def f(x):
 	x0 = -4.5
 	return 1 + (mu - 1) * math.log(1 - (x / x0), 10) / math.log(1 - (us / x0), 10)
 
-def getFrequencies(answer, wordList):
-	#generates the distribution of possible colourings for words in a wordList if the solution is answer
+def get_frequencies(answer, word_list):
+	#generates the distribution of possible colourings for words in a word_list if the solution is answer
 	patterns = []
 	frequencies = []
-	for word in wordList:
+	for word in word_list:
 		pattern = wordle.compareWords(answer, word)
 		if pattern in patterns:
 			frequencies[patterns.index(pattern)] += 1
@@ -42,9 +42,9 @@ def getFrequencies(answer, wordList):
 			frequencies.append(1)
 	return frequencies
 
-def getFrequencyDict(answer, wordList):
+def get_frequency_dict(answer, word_list):
 	frequencies = {}
-	for word in wordList:
+	for word in word_list:
 		pattern = tuple(wordle.compareWords(word, answer))
 		if pattern in frequencies:
 			frequencies[pattern] += [word]
@@ -52,145 +52,145 @@ def getFrequencyDict(answer, wordList):
 			frequencies[pattern] = [word]
 	return frequencies
 
-def getEntropy(frequencies, total):
+def get_entropy(frequencies, total):
 	entropy = 0
 	for f in frequencies:
 		p = f/total
 		entropy += (p)*(-math.log(p,2))
 	return entropy
 
-def getAllEntropies(answerList, wordList):
-	wordWithEntropy = []
-	for word in wordList:
-		frequencies = getFrequencies(word, answerList)
-		wordWithEntropy.append([word, getEntropy(frequencies, len(answerList))])
+def get_all_entropies(answer_list, word_list):
+	word_with_entropy = []
+	for word in word_list:
+		frequencies = get_frequencies(word, answer_list)
+		word_with_entropy.append([word, get_entropy(frequencies, len(answer_list))])
 
-	return wordWithEntropy
+	return word_with_entropy
 
-def playWordleBotV1(wordList, word):
-	wordWithMaxEntropy = 'tares' #always using this word as it maximises expected entropy with no information
-	Game = wordle.GameObject(word)
-	nextGuess = wordWithMaxEntropy
+def play_wordle_bot_v1(word_list, word):
+	word_with_max_entropy = 'tares' #always using this word as it maximises expected entropy with no information
+	game = wordle.GameObject(word)
+	next_guess = word_with_max_entropy
 	score = 0
 	while score < 6:
-		print(nextGuess)
-		Game.guess(nextGuess)
+		print(next_guess)
+		game.guess(next_guess)
 		score += 1
-		currentColouring = Game.colourings[score-1]
+		current_colouring = game.colourings[score-1]
 
 		#checks if answer found
-		if currentColouring == [2,2,2,2,2]:
+		if current_colouring == [2,2,2,2,2]:
 			return score
 
 		#should never run, catches incorrect word errors
-		if len(wordList) == 0:
+		if len(word_list) == 0:
 			print('Word not in word list!')
 			return
 
-		#refines the wordList
-		wordList = [word for word in wordList if currentColouring == wordle.compareWords(nextGuess, word)]
+		#refines the word_list
+		word_list = [word for word in word_list if current_colouring == wordle.compareWords(next_guess, word)]
 
 		#refreshes the entropies and selects the most entropic word as next guess
-		e = getAllEntropies(wordList, wordList)
+		e = get_all_entropies(word_list, word_list)
 		e.sort(reverse = True, key = lambda pair: pair[1])
-		nextGuess = e[0][0]
+		next_guess = e[0][0]
 
 	return 100 #returns 100 in the case of a loss
 
-def thinList(l, colouring, guess):
+def thin_list(l, colouring, guess):
 	return [word for word in l if wordle.compareWords(guess, word) == colouring]
 
-def playWordleBotV2(answerList, wordList, word, cDict):
-	#answer list is the list of possible solutions, testList is the list of allowed guesses
-	wordWithMaxEntropy = 'tares' #always using this word as it maximises expected entropy with no information
-	Game = wordle.GameObject(word)
-	nextGuess = wordWithMaxEntropy
+def play_wordle_bot_v2(answer_list, word_list, word, c_dict):
+	#answer list is the list of possible solutions, test_list is the list of allowed guesses
+	word_with_max_entropy = 'tares' #always using this word as it maximises expected entropy with no information
+	game = wordle.GameObject(word)
+	next_guess = word_with_max_entropy
 	score = 0
 	while score < 6:
-		Game.guess(nextGuess)
+		game.guess(next_guess)
 		score += 1
-		currentColouring = Game.colourings[score-1]
+		current_colouring = game.colourings[score-1]
 
 		#checks if answer found
-		if currentColouring == [2,2,2,2,2]:
+		if current_colouring == [2,2,2,2,2]:
 			return score
 
 
-		answerList = thinList(answerList, currentColouring, nextGuess)
+		answer_list = thin_list(answer_list, current_colouring, next_guess)
 
 		#should never run, catches incorrect word errors
-		if len(answerList) == 0:
+		if len(answer_list) == 0:
 			print('Word not in word list!')
 			return
 
 		#refreshes the entropies and selects the most entropic word as next guess
 		
 		elif score == 1:
-			nextGuess = cDict[tuple(currentColouring)]
+			next_guess = c_dict[tuple(current_colouring)]
 		else:
-			scores = getAllEntropies(answerList, wordList)
-			n = len(answerList)
+			scores = get_all_entropies(answer_list, word_list)
+			n = len(answer_list)
 			p = 1/n
 			for pair in scores:
-				if pair[0] in answerList:
+				if pair[0] in answer_list:
 					pair[1] = (score+1)*(p) + (1-p)*(score+1+f(math.log(n, 2)-pair[1]))
 				else:
 					pair[1] = score+1+f(math.log(n, 2)-pair[1])
 			scores.sort(reverse = True, key = lambda pair: pair[1])
-			nextGuess = scores[-1][0]
+			next_guess = scores[-1][0]
 
 	return 100 #returns 100 in the case of a loss
 
-def playWordleBotV3(answerList, wordList, word, cDict):
-	#answer list is the list of possible solutions, testList is the list of allowed guesses
-	wordWithMaxEntropy = 'tares' #always using this word as it maximises expected entropy with no information
-	Game = wordle.GameObject(word)
-	nextGuess = wordWithMaxEntropy
+def play_wordle_bot_v3(answer_list, word_list, word, c_dict):
+	#answer list is the list of possible solutions, test_list is the list of allowed guesses
+	word_with_max_entropy = 'tares' #always using this word as it maximises expected entropy with no information
+	game = wordle.GameObject(word)
+	next_guess = word_with_max_entropy
 	score = 0
 	while score < 6:
-		Game.guess(nextGuess)
+		game.guess(next_guess)
 		score += 1
-		currentColouring = Game.colourings[score-1]
+		current_colouring = game.colourings[score-1]
 
 		#checks if answer found
-		if currentColouring == [2,2,2,2,2]:
+		if current_colouring == [2,2,2,2,2]:
 			return score
 
-		#refines the wordList
-		answerList = [word for word in answerList if currentColouring == wordle.compareWords(nextGuess, word)]
+		#refines the word_list
+		answer_list = [word for word in answer_list if current_colouring == wordle.compareWords(next_guess, word)]
 
 		#should never run, catches incorrect word errors
-		if len(answerList) == 0:
+		if len(answer_list) == 0:
 			print('Word not in word list!')
 			return
 
 		#refreshes the entropies and selects the most entropic word as next guess
-		if len(answerList) < 3:
-			nextGuess = answerList[0]
+		if len(answer_list) < 3:
+			next_guess = answer_list[0]
 		elif score == 1:
-				nextGuess = cDict[tuple(currentColouring)]
+				next_guess = c_dict[tuple(current_colouring)]
 		else:
-			e = getAllEntropies(answerList, wordList)
+			e = get_all_entropies(answer_list, word_list)
 			e.sort(reverse = False, key = lambda pair: pair[1])
-			#print(e[:5],answerList)
-			nextGuess = e[-1][0]
-			#print(nextGuess)
+			#print(e[:5],answer_list)
+			next_guess = e[-1][0]
+			#print(next_guess)
 
 	return 100 #returns 100 in the case of a loss
 
-def wordleBotWithUnknownAnswer1(wordList):
-	wordList
-	wordWithMaxEntropy = 'tares'
+def wordle_bot_with_unknown_answer1(word_list):
+	word_list
+	word_with_max_entropy = 'tares'
 	game = wordle.GameObject('', 1)
 	game.guess('tares')
 	font = pygame.font.Font(pygame.font.get_default_font(), 100)
 	width = 500
 	height = 600
-	SCREEN = pygame.display.set_mode((width, height))
-	SCREEN.fill((255,255,255))
+	screen = pygame.display.set_mode((width, height))
+	screen.fill((255,255,255))
 	running = True
 	clock = pygame.time.Clock()
-	FPS = 20
+	fps = 20
 	playing = True
 	while playing:
 		for event in pygame.event.get():
@@ -201,40 +201,40 @@ def wordleBotWithUnknownAnswer1(wordList):
 				if event.key == K_SPACE:
 					print(game.colourings, game.guesses)
 					if len(game.colourings[game.currentGuess-1]) == 5:
-						colouringComplete = True
+						colouring_complete = True
 						for colouring in game.colourings[game.currentGuess-1]:
 							if colouring == -1:
-								colouringComplete = False
-						if colouringComplete:
-							wordList = [word for word in wordList if game.colourings[game.currentGuess-1] == wordle.compareWords(game.guesses[game.currentGuess-1], word)]
-							wordWithEntropy = getAllEntropies(wordList, wordList)
-							wordWithEntropy.sort(reverse = True, key = lambda pair: pair[1])
-							if wordWithEntropy == []:
+								colouring_complete = False
+						if colouring_complete:
+							word_list = [word for word in word_list if game.colourings[game.currentGuess-1] == wordle.compareWords(game.guesses[game.currentGuess-1], word)]
+							word_with_entropy = get_all_entropies(word_list, word_list)
+							word_with_entropy.sort(reverse = True, key = lambda pair: pair[1])
+							if word_with_entropy == []:
 								print('no words left in list')
 							else:
-								nextWord = wordWithEntropy[0][0]
-								print(len(wordList))
-								game.guess(nextWord)
+								next_word = word_with_entropy[0][0]
+								print(len(word_list))
+								game.guess(next_word)
 			if event.type == MOUSEBUTTONUP:
 				mouse = pygame.mouse.get_pos()
-				mouseTile = [mouse[0]//100, mouse[1]//100]
-				if mouseTile[1] == game.currentGuess-1:
-					game.colourings[mouseTile[1]][mouseTile[0]] += 1
-					game.colourings[mouseTile[1]][mouseTile[0]] = game.colourings[mouseTile[1]][mouseTile[0]] % 3
-		wordle.drawScreen(SCREEN, game, font)
-		clock.tick(FPS)
+				mouse_tile = [mouse[0]//100, mouse[1]//100]
+				if mouse_tile[1] == game.currentGuess-1:
+					game.colourings[mouse_tile[1]][mouse_tile[0]] += 1
+					game.colourings[mouse_tile[1]][mouse_tile[0]] = game.colourings[mouse_tile[1]][mouse_tile[0]] % 3
+		wordle.drawScreen(screen, game, font)
+		clock.tick(fps)
 
-def wordleBotWithUnknownAnswer2(wordList, testList, cDict):
-	wordWithMaxEntropy = 'tares'
+def wordle_bot_with_unknown_answer2(word_list, test_list, c_dict):
+	word_with_max_entropy = 'tares'
 	game = wordle.GameObject('', 1)
-	game.guess(wordWithMaxEntropy)
+	game.guess(word_with_max_entropy)
 	font = pygame.font.Font(pygame.font.get_default_font(), 100)
 	width = 500
 	height = 600
-	SCREEN = pygame.display.set_mode((width, height))
-	SCREEN.fill((255,255,255))
+	screen = pygame.display.set_mode((width, height))
+	screen.fill((255,255,255))
 	clock = pygame.time.Clock()
-	FPS = 20
+	fps = 20
 	playing = True
 	while playing:
 		for event in pygame.event.get():
@@ -245,81 +245,42 @@ def wordleBotWithUnknownAnswer2(wordList, testList, cDict):
 				if event.key == K_SPACE:
 					print(game.colourings, game.guesses)
 					if len(game.colourings[game.currentGuess-1]) == 5:
-						colouringComplete = True
+						colouring_complete = True
 						for colouring in game.colourings[game.currentGuess-1]:
 							if colouring == -1:
-								colouringComplete = False
-						if colouringComplete:
-							testList = [word for word in testList if game.colourings[game.currentGuess-1] == wordle.compareWords(game.guesses[game.currentGuess-1], word)]
+								colouring_complete = False
+						if colouring_complete:
+							test_list = [word for word in test_list if game.colourings[game.currentGuess-1] == wordle.compareWords(game.guesses[game.currentGuess-1], word)]
 							if game.currentGuess == 1:
-								nextGuess = cDict[tuple(game.colourings[game.currentGuess-1])]
+								next_guess = c_dict[tuple(game.colourings[game.currentGuess-1])]
 							else:
-								scores = getAllEntropies(testList, wordList)
-								n = len(testList)
+								scores = get_all_entropies(test_list, word_list)
+								n = len(test_list)
 								if n == 0:
 									'No possibilities'
 								p = 1/n
 								score = game.currentGuess-1
 								for pair in scores:
-									if pair[0] in testList:
+									if pair[0] in test_list:
 										pair[1] = (score+1)*(p) + (1-p)*(score+1+f(math.log(n, 2)-pair[1]))
 									else:
 										pair[1] = score+1+f(math.log(n, 2)-pair[1])
 								scores.sort(reverse = True, key = lambda pair: pair[1])
-								nextGuess = scores[-1][0]
+								next_guess = scores[-1][0]
 
-							print(len(testList))
-							game.guess(nextGuess)
+							print(len(test_list))
+							game.guess(next_guess)
 			if event.type == MOUSEBUTTONUP:
 				mouse = pygame.mouse.get_pos()
-				mouseTile = [mouse[0]//100, mouse[1]//100]
-				if mouseTile[1] == game.currentGuess-1:
-					game.colourings[mouseTile[1]][mouseTile[0]] += 1
-					game.colourings[mouseTile[1]][mouseTile[0]] = game.colourings[mouseTile[1]][mouseTile[0]] % 3
-		wordle.drawScreen(SCREEN, game, font)
-		clock.tick(FPS)
+				mouse_tile = [mouse[0]//100, mouse[1]//100]
+				if mouse_tile[1] == game.currentGuess-1:
+					game.colourings[mouse_tile[1]][mouse_tile[0]] += 1
+					game.colourings[mouse_tile[1]][mouse_tile[0]] = game.colourings[mouse_tile[1]][mouse_tile[0]] % 3
+		wordle.drawScreen(screen, game, font)
+		clock.tick(fps)
 
-def findF(testWords, wordList, cDict):
-	import matplotlib.pyplot as plt
-	import numpy as np
-
-	noBins = 20
-	turnsRemainingHistogram = {}
-	for x in range(noBins+1):
-		turnsRemainingHistogram[x] = []
-	for x in range(1000):
-		print(x)
-		response = playWordleBotV2(testWords, wordList, random.choice(testWords), cDict)[1][::-1]
-		if response[0] != 100:
-			uncertaintyPerTurn = response
-			l = len(uncertaintyPerTurn)
-			for x in range(l):
-				#uncertaintyByTurnsRemaining[x+1].append(uncertaintyPerTurn[x])
-				turnsRemainingHistogram[int(noBins*(uncertaintyPerTurn[x]/10.847057346))].append(x+1)
-	freq = [0 for x in turnsRemainingHistogram]
-	for x in turnsRemainingHistogram:
-		if len(turnsRemainingHistogram[x]) > 0:
-			freq[x] = sum(turnsRemainingHistogram[x])/len(turnsRemainingHistogram[x])
-	x = np.array([i for i in range(len(freq))])
-	y = np.array(freq)
-	plt.style.use('ggplot')
-	print(x, y)
-
-
-	x_pos = [i*10.84/noBins for i, _ in enumerate(x)]
-	xTicks = [i*10.84/noBins for i, _ in enumerate(x) if i % 4 == 0]
-
-	plt.bar(x_pos, y, color='green')
-	plt.xlabel("Remaining Uncertainty")
-	plt.ylabel("Expeced number of guesses")
-	plt.title("Expected number of guesses by uncertainty")
-
-	plt.xticks(xTicks)
-
-	plt.show()
-
-def createInitialColouringsFile(wordList, testWords, sol):
-	initialColouringsDict = {}
+def create_initial_colourings_file(word_list, test_words, sol):
+	initial_colourings_dict = {}
 	for v in range(3):
 		for w in range(3):
 			for x in range(3):
@@ -327,24 +288,24 @@ def createInitialColouringsFile(wordList, testWords, sol):
 					for z in range(3):
 						colouring = (v,w,x,y,z)
 						print(colouring)
-						tempAns = [word for word in testWords if colouring == tuple(wordle.compareWords(sol, word))]
-						if len(tempAns) != 0:
-							scores = getAllEntropies(tempAns, wordList)
-							n = len(tempAns)
-							p = 1/n
+						temp_ans = [word for word in test_words if colouring == tuple(wordle.compareWords(sol, word))]
+						if len(temp_ans) != 0:
+							scores = get_all_entropies(temp_ans, word_list)
+							n = len(temp_ans)
+							p = 1 / n
 							for pair in scores:
-								if pair[0] in tempAns:
+								if pair[0] in temp_ans:
 									pair[1] = (1)*(p) + (1-p)*(1+f(math.log(n, 2)-pair[1]))
 								else:
 									pair[1] = 1+f(math.log(n, 2)-pair[1])
 							scores.sort(reverse = True, key = lambda pair: pair[1])
-							initialColouringsDict[colouring] = scores[-1][0]
+							initial_colourings_dict[colouring] = scores[-1][0]
 							print(scores[-1][0])
 						else:
 							print('')
 
-def loadColouringDict(file):
-	initialColouringsDict = {}
+def load_colouring_dict(file):
+	initial_colourings_dict = {}
 	with open(file, 'r') as f:
 		l = f.readline()
 		for v in range(3):
@@ -352,26 +313,26 @@ def loadColouringDict(file):
 				for x in range(3):
 					for y in range(3):
 						for z in range(3):
-							initialColouringsDict[(v,w,x,y,z)] = f.readline()[:-1]
+							initial_colourings_dict[(v,w,x,y,z)] = f.readline()[:-1]
 							f.readline()
-	return initialColouringsDict
+	return initial_colourings_dict
 
-def testBot2(testWords, wordList, cDict):
+def test_bot2(test_words, word_list, c_dict):
 	scores = {1:0,2:0,3:0,4:0,5:0,6:0,100:0,}
-	for word in range(len(testWords)):
+	for word in range(len(test_words)):
 		if word % 50 == 0:
-			print(word/len(testWords))
-		s = playWordleBotV2(testWords, wordList, testWords[word], cDict)
+			print(word/len(test_words))
+		s = play_wordle_bot_v2(test_words, word_list, test_words[word], c_dict)
 		scores[s] += 1
 		print(scores)
 	print(scores)
 
 def main():
-	wordList = wordle.generateWordList(file)
-	#testList = copy.copy(wordList)
-	testWords = wordle.generateWordList(smallFile)
-	cDict = loadColouringDict(currentLoc+'/colourings/initialColourings2')
-	wordleBotWithUnknownAnswer2(testWords, wordList, cDict)
+	word_list = wordle.generateWordList(file)
+	#test_list = copy.copy(word_list)
+	test_words = wordle.generateWordList(small_file)
+	c_dict = load_colouring_dict(current_loc+'/colourings/initialColourings2')
+	wordle_bot_with_unknown_answer2(test_words, word_list, c_dict)
 
 
 if __name__ == '__main__':

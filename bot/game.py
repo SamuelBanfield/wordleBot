@@ -1,14 +1,14 @@
-def generateWordList(file):
-	wordList = []
-	with open(file, 'r') as wordFile:
-		word = wordFile.readline()
+def generate_word_list(file):
+	word_list = []
+	with open(file, 'r') as word_file:
+		word = word_file.readline()
 		while word != '':
-			wordList.append(word[:-1])
-			word = wordFile.readline()
+			word_list.append(word[:-1])
+			word = word_file.readline()
 
-	return wordList
+	return word_list
 
-def compareWords(guess, answer):
+def compare_words(guess, answer):
 	#0 is grey, 1 is yellow, 2 is green
 	colouring = [0,0,0,0,0]
 	if len(guess) != 5:
@@ -33,9 +33,9 @@ class GameObject:
 		self.answer = answer
 		self.guesses = ['' for _ in range(6)] #matrix for showing the current guesses, updates livetime with key presses
 		self.colourings = [[-1,-1,-1,-1,-1] for x in range(6)] #colourings update row by row as guesses are made
-		self.currentGuess = 0
+		self.current_guess = 0
 	def guess(self, guess):
-		self.guesses[self.currentGuess] = guess
+		self.guesses[self.current_guess] = guess
 		if self.mode == 0:
-			self.colourings[self.currentGuess] = compareWords(guess, self.answer)
-		self.currentGuess += 1
+			self.colourings[self.current_guess] = compare_words(guess, self.answer)
+		self.current_guess += 1

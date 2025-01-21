@@ -1,88 +1,100 @@
 import random, pygame, sys
-pygame.init()
 from pygame.locals import *
 
-from .game import GameObject, generateWordList
+from .game import GameObject, generate_word_list
 
-colourDict = {
-	-1: (255,255,255),
-	0: (128,128,128),
-	1: (255,255,0),
-	2: (0,255,0)
+WHITE = (255, 255, 255)
+GREY = (128, 128, 128)
+BLACK = (0, 0, 0)
+YELLOW = (255, 255, 0)
+GREEN = (0, 255, 0)
+
+COLOUR_DICT = {
+	-1: WHITE,
+	0: GREY,
+	1: YELLOW,
+	2: GREEN,
 }
 
-file = "wordlists/5letterwords.txt" #choose text file to generate word from
+WORDLIST_FILE = "wordlists/5letterwords.txt" # Choose text file to generate word from
 
 class PygameWordleUI:
 
-	def __init__(self, word, fps = 20):
+	def __init__(self, word, fps = 20, square_size = 100):
+		pygame.init()
 		self.game = GameObject(word)
-		self.font = pygame.font.Font(pygame.font.get_default_font(), 100)
-		self.dimensions = (5 * 100, 6 * 100)
+		self.square_size = square_size
+		self.font = pygame.font.Font(pygame.font.get_default_font(), square_size)
+		self.dimensions = (5 * self.square_size, 6 * self.square_size)
 		self.screen = pygame.display.set_mode(self.dimensions)
-		self.screen.fill((255,255,255))
+		self.screen.fill(WHITE)
 		self.clock = pygame.time.Clock()
 		self.fps = fps
-		self.typedWord = ''
+		self.typed_word = ''
 
 	def run(self):
 		while True:
-			for event in pygame.event.get():
-				if event.type == QUIT:
-					pygame.quit()
-					sys.exit()
-				if event.type == KEYUP:
-					key = event.key
-					if 97 <= key <= 122: # Letter keys
-						if len(self.typedWord) < 5:
-							self.typedWord += chr(key)
-					elif key == 8: # Backspace key
-						if len(self.typedWord) > 0:
-							self.typedWord = self.typedWord[:-1]
-					elif key == 13: # Enter key
-						if len(self.typedWord) == 5:
-							print(self.typedWord)
-							self.game.guess(self.typedWord)
-							self.typedWord = ''
-					elif event.key == K_1: # Reset
-						wordToGuess = random.choice(generateWordList("wordlists/5letterwords.txt"))
-						self.game = GameObject(wordToGuess)
-				self.draw_screen()
-				self.clock.tick(self.fps)
+			self.handle_events()
+			self.draw_screen()
+			self.clock.tick(self.fps)
+
+	def handle_events(self):
+		for event in pygame.event.get():
+			if event.type == QUIT:
+				pygame.quit()
+				sys.exit()
+			if event.type == KEYUP:
+				self.handle_key_up(event.key)
+
+	def handle_key_up(self, key):
+		if K_a <= key <= K_z: # Letter keys
+			if len(self.typed_word) < 5:
+				self.typed_word += chr(key)
+		elif key == K_BACKSPACE: # Backspace key
+			if len(self.typed_word) > 0:
+				self.typed_word = self.typed_word[:-1]
+		elif key == K_RETURN: # Enter key
+			if len(self.typed_word) == 5:
+				print(self.typed_word)
+				self.game.guess(self.typed_word)
+				self.typed_word = ''
+		elif key == K_1: # Reset
+			word_to_guess = random.choice(generate_word_list(WORDLIST_FILE))
+			self.game = GameObject(word_to_guess)
 			
 	def draw_screen(self):
-		self.screen.fill((255,255,255))
-	
-		#first iterating through drawing letters in completed guesses
-		for guessPosition in range(len(self.game.guesses)):
-			for letterIndex in range(len(self.game.guesses[guessPosition])):
-				guess = self.game.guesses[guessPosition]
-				letterImage = self.font.render(guess[letterIndex].upper(), False, (0,0,0))
-				letterRect = letterImage.get_rect()
-				letterRect.center = (50+letterIndex*100, 50 + guessPosition*100)
-				pygame.draw.rect(self.screen, colourDict[self.game.colourings[guessPosition][letterIndex]], pygame.Rect(letterIndex * 100, guessPosition * 100, 100, 100))
-				self.screen.blit(letterImage, letterRect)
-
-		#second iterating through the word thats currently being typed
-		for letterIndex in range(len(self.typedWord)):
-			letterImage = self.font.render(self.typedWord[letterIndex].upper(), False, (0,0,0))
-			letterRect = letterImage.get_rect()
-			letterRect.center = (50+letterIndex*100, 50 + self.game.currentGuess * 100)
-			pygame.draw.rect(
-				self.screen,
-				colourDict[self.game.colourings[guessPosition][letterIndex]],
-				pygame.Rect(letterIndex*100, self.game.currentGuess * 100, 100, 100)
-			)
-			self.screen.blit(letterImage, letterRect)
-
-		#finally iterating through drawing black boxes:
-		for x in range(6):
-			for y in range(5):
-				pygame.draw.rect(self.screen, (0,0,0), pygame.Rect(y*100, x*100, 100, 100), 2)
-
+		self.screen.fill(WHITE)
+		self.draw_guesses()
+		self.draw_grid()
 		pygame.display.flip()
 
+	def draw_guesses(self):
+		for guess_position, guess in enumerate([word for word in self.game.guesses if word] + [self.typed_word]):
+			for letter_index, letter in enumerate(guess):
+				letter_image = self.font.render(letter.upper(), True, BLACK)
+				letter_rect = letter_image.get_rect()
+				letter_rect.center = (
+					self.square_size // 2 + letter_index * self.square_size,
+					self.square_size // 2 + guess_position * self.square_size
+				)
+				pygame.draw.rect(
+					self.screen,
+					COLOUR_DICT[self.game.colourings[guess_position][letter_index] if guess_position < len(self.game.colourings) else -1],
+					pygame.Rect(letter_index * self.square_size, guess_position * self.square_size, self.square_size, self.square_size)
+				)
+				self.screen.blit(letter_image, letter_rect)
+	
+	def draw_grid(self):
+		for x in range(6):
+			for y in range(5):
+				pygame.draw.rect(
+					self.screen,
+					BLACK,
+					pygame.Rect(y * self.square_size, x * self.square_size, self.square_size, self.square_size),
+					2
+				)
+
 def main():
-	words = generateWordList(file)
+	words = generate_word_list(WORDLIST_FILE)
 	ui = PygameWordleUI(random.choice(words))
 	ui.run()
