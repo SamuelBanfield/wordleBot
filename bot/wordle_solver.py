@@ -1,6 +1,3 @@
-'''
-Words that arent words: lieth, dieth, grook, shmoo, chiff, goeth
-'''
 import math
 from pygame.locals import *
 
@@ -12,12 +9,16 @@ file = 'wordlists/bigWordFile.txt'
 small_file = 'wordlists/5letterwords.txt'
 official_file = 'wordlists/officialAnswerList.txt'
 
-def f(x):
-	# These constants are determined by making alog(x)+b pass through (0,1), (us,mu), (5.4, 2.7)
-	mu = 3.35
-	us = 10.84
+def expected_guesses(remaing_entropy):
+	"""
+	Calculate the expected number of guesses given the remaining entropy.
+	"""
+	mu = 3.35 # Average guesses
+	us = 10.84 # Starting entropy
 	x0 = -4.5
-	return 1 + (mu - 1) * math.log(1 - (x / x0), 10) / math.log(1 - (us / x0), 10)
+	# These constants are determined by making alog(x)+b pass through (0,1), (us,mu), (5.4, 2.7)
+	# (5.4, 2.7) is a point that looks by eye to be on the curve
+	return 1 + (mu - 1) * math.log(1 - (remaing_entropy / x0), 10) / math.log(1 - (us / x0), 10)
 
 def get_frequencies(answer, word_list):
 	#generates the distribution of possible colourings for words in a word_list if the solution is answer
@@ -101,9 +102,9 @@ def create_initial_colourings_file(word_list, test_words, sol):
 			p = 1 / n
 			for pair in scores:
 				if pair[0] in temp_ans:
-					pair[1] = 1 * p + (1 - p) * (1 + f(math.log(n, 2) - pair[1]))
+					pair[1] = 1 * p + (1 - p) * (1 + expected_guesses(math.log(n, 2) - pair[1]))
 				else:
-					pair[1] = 1+f(math.log(n, 2)-pair[1])
+					pair[1] = 1 + expected_guesses(math.log(n, 2)-pair[1])
 			scores.sort(reverse = True, key = lambda pair: pair[1])
 			initial_colourings_dict[colouring] = scores[-1][0]
 			print(scores[-1][0])

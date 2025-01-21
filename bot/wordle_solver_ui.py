@@ -5,8 +5,8 @@ import math, pygame, random
 from typing import override
 from pygame.locals import *
 
-from bot.game import GameObject, compare_words, generate_word_list
-from bot.wordle_solver import get_all_entropies, f, file, small_file, load_colouring_dict
+from bot.game import compare_words, generate_word_list
+from bot.wordle_solver import get_all_entropies, expected_guesses, file, small_file, load_colouring_dict
 from bot.wordle import PygameWordleUI
 
 
@@ -35,17 +35,19 @@ class PygameWordleSolverUI(PygameWordleUI):
         if self.game.current_guess == 1:
             next_guess = self.c_dict[tuple(self.game.colourings[self.game.current_guess-1])]
         else:
-            scores = get_all_entropies(self.test_list, self.word_list)
-            n = len(self.test_list)
-            if n == 0:
+            if not self.test_list:
                 raise ValueError('No word from the answers list satisfies these clues')
-            score = self.game.current_guess - 1
+            n = len(self.test_list)
             p = 1 / n
-            for pair in scores:
-                if pair[0] in self.test_list:
-                    pair[1] = (score + 1) * p + (1 - p)*(score + 1 + f(math.log(n, 2) - pair[1]))
-                else:
-                    pair[1] = score + 1 + f(math.log(n, 2) - pair[1])
+            predicted_score_for_word = lambda allowed_guess, entropy: (
+                p * self.game.current_guess + (1 - p) * (self.game.current_guess + expected_guesses(math.log(n, 2) - entropy))
+                if allowed_guess
+                else self.game.current_guess + expected_guesses(math.log(n, 2) - entropy)
+            )
+            scores = [
+                (word in self.test_list, predicted_score_for_word(word, entropy)) 
+                for (word, entropy) in get_all_entropies(self.test_list, self.word_list)
+            ]
             scores.sort(reverse = True, key = lambda pair: pair[1])
             next_guess = scores[-1][0]
 
